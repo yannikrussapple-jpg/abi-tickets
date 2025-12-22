@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abi Party Tickets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- PayPal SDK: set your client-id and currency as needed -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AeMHqLsZKvXWS73PkzU6Few5GKeiCf0gy_FmL8XCtTwdgvcKYU02LrbmMWsiz7tMY-iFFrYBJad-7xC5&currency=EUR"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero__badge">Abiturjahrgang 2026 GO</div>
+      <div class="hero__content">
+        <div class="hero__copy">
+          <p class="eyebrow">Special Night</p>
+          <h1>Abi Party</h1>
+          <p class="lead">Gambrinus am Fürstenbahnhof, Bad Homburg<br>23.01.2026 · 21:00 Uhr</p>
+          <div class="hero__cta">
+            <button class="btn btn-primary" data-scroll="tickets">Tickets sichern</button>
+            <div class="price-tag">12 € pro Ticket · 200 verfügbar</div>
+          </div>
+        </div>
+        <div class="hero__art">
+          <img src="Ticket.png" alt="Abi Party Poster" class="hero__image">
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="info" id="details">
+        <div class="card">
+          <div class="card__item">
+            <div class="icon">📍</div>
+            <div>
+              <div class="label">Location</div>
+              <div class="value">Gambrinus am Fürstenbahnhof, Bad Homburg</div>
+            </div>
+          </div>
+          <div class="card__item">
+            <div class="icon">⏰</div>
+            <div>
+              <div class="label">Datum & Zeit</div>
+              <div class="value">23.01.2026 · 21:00 Uhr</div>
+            </div>
+          </div>
+          <div class="card__item">
+            <div class="icon">💶</div>
+            <div>
+              <div class="label">Preis</div>
+              <div class="value">12 € je Ticket</div>
+            </div>
+          </div>
+          <div class="card__item">
+            <div class="icon">🎟️</div>
+            <div>
+              <div class="label">Kontingent</div>
+              <div class="value"><span id="remaining-count">200</span> Tickets verfügbar</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tickets" id="tickets">
+        <div class="tickets__header">
+          <div>
+            <p class="eyebrow">Secure your spot</p>
+            <h2>Tickets kaufen</h2>
+            <p class="muted">Bitte Name und E-Mail angeben, damit wir dein Ticket registrieren können.</p>
+          </div>
+          <div class="pill">12 € pro Ticket</div>
+        </div>
+
+        <div class="ticket-grid">
+          <form class="ticket-form" id="ticket-form">
+            <label>Vorname
+              <input type="text" name="firstName" placeholder="Dein Vorname" required>
+            </label>
+            <label>Nachname
+              <input type="text" name="lastName" placeholder="Dein Nachname" required>
+            </label>
+            <label>Geburtstag
+              <input type="date" name="birthdate" required>
+            </label>
+            <label>E-Mail
+              <input type="email" name="email" placeholder="du@example.com" required>
+            </label>
+            <label>Anzahl (max. 10)
+              <input type="number" name="quantity" min="1" max="10" value="1" required>
+            </label>
+            <button type="submit" class="btn btn-primary">Ticket reservieren und bezahlen</button>
+            <p class="form-hint">Nach Klick wirst du zu PayPal geleitet. Erst nach erfolgreicher Zahlung werden die Tickets bestätigt und im Sheet gespeichert.</p>
+            <div id="paypal-container" class="paypal-container"></div>
+          </form>
+
+          <div class="ticket-summary">
+            <div class="summary-header">
+              <div>
+                <p class="eyebrow">Dein Ticket</p>
+                <h3>Abi Party 2026 GO</h3>
+              </div>
+              <span class="badge">23.01.2026</span>
+            </div>
+            <div class="summary-body">
+              <div class="summary-row">
+                <span>Ort</span>
+                <strong>Bad Homburg</strong>
+              </div>
+              <div class="summary-row">
+                <span>Start</span>
+                <strong>21:00 Uhr</strong>
+              </div>
+              <div class="summary-row">
+                <span>Preis</span>
+                <strong>12 €</strong>
+              </div>
+              <div class="summary-row">
+                <span>Verfügbar</span>
+                <strong><span id="remaining-inline">200</span> Tickets</strong>
+              </div>
+              <div class="progress">
+                <div class="progress__bar" id="progress-bar" style="width: 0%"></div>
+              </div>
+              <p class="muted">Beeil dich, bevor das Kontingent weg ist.</p>
+            </div>
+            <div class="confirmation" id="confirmation" hidden>
+              <p class="eyebrow">Reserviert</p>
+              <h4 id="confirmation-title">Tickets bestätigt</h4>
+              <p class="muted" id="confirmation-detail"></p>
+              <div class="ticket-code" id="ticket-code"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Abi Party 2026 GO · Gambrinus am Fürstenbahnhof, Bad Homburg · 23.01.2026 · 21:00 Uhr</p>
+      <p class="signature">by Yannik</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
