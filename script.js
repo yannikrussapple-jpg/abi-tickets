@@ -1,6 +1,6 @@
 (() => {
   const TOTAL = 200;
-  const PRICE_PER_TICKET = 12;
+  const PRICE_PER_TICKET = 1;
   // n8n webhook configuration
   const N8N_WEBHOOK_URL = 'https://n8n.srv1146092.hstgr.cloud/webhook-test/c23e2274-650c-43e9-bfd7-fa524b922d97';
   let remaining = TOTAL;
@@ -147,7 +147,7 @@
 
         confirmation.hidden = false;
         confirmationTitle.textContent = 'Zahlung bestätigt';
-        confirmationDetail.textContent = `${order.quantity} Ticket(s) für ${order.firstName} ${order.lastName} · 12 € pro Ticket · Zahlung PayPal.`;
+        confirmationDetail.textContent = `${order.quantity} Ticket(s) für ${order.firstName} ${order.lastName} · ${PRICE_PER_TICKET} € pro Ticket · Zahlung PayPal.`;
         ticketCodeEl.textContent = code;
 
         clearPayPal();
