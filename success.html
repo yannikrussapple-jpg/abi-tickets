@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kauf bestätigt · Abi Party Tickets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero" style="padding-bottom: 0;">
+      <div class="hero__badge">Abiturjahrgang 2026 GO</div>
+      <div class="hero__content">
+        <div class="hero__copy">
+          <p class="eyebrow">Bestätigung</p>
+          <h1>Kauf erfolgreich</h1>
+          <p class="lead">Deine Tickets sind bestätigt. Du bekommst gleich alle Details hier angezeigt.</p>
+        </div>
+        <div class="hero__art">
+          <img src="Ticket.png" alt="Abi Party Poster" class="hero__image">
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="tickets" id="success">
+        <div class="ticket-grid">
+          <div class="card">
+            <div class="card__item">
+              <div class="icon">✅</div>
+              <div>
+                <div class="label">Status</div>
+                <div class="value" id="success-status">Bestätigt</div>
+              </div>
+            </div>
+            <div class="card__item">
+              <div class="icon">🎟️</div>
+              <div>
+                <div class="label">Tickets</div>
+                <div class="value" id="success-quantity">–</div>
+              </div>
+            </div>
+            <div class="card__item">
+              <div class="icon">💶</div>
+              <div>
+                <div class="label">Gesamt</div>
+                <div class="value" id="success-total">–</div>
+              </div>
+            </div>
+            <div class="card__item">
+              <div class="icon">👤</div>
+              <div>
+                <div class="label">Name</div>
+                <div class="value" id="success-name">–</div>
+              </div>
+            </div>
+            <div class="card__item">
+              <div class="icon">✉️</div>
+              <div>
+                <div class="label">E-Mail</div>
+                <div class="value" id="success-email">–</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ticket-instructions">
+            <div class="confirmation" id="success-box" hidden>
+              <p class="eyebrow">Ticket-Code</p>
+              <h4>Bitte bei Abholung bereithalten</h4>
+              <div class="ticket-code" id="success-code"></div>
+              <p class="muted" id="success-note"></p>
+              <div style="margin-top: 14px; display:flex; gap:10px; flex-wrap:wrap;">
+                <a class="btn btn-primary" href="index.html#tickets">Zurück zur Ticketseite</a>
+              </div>
+            </div>
+
+            <div class="confirmation" id="success-missing" hidden>
+              <p class="eyebrow">Hinweis</p>
+              <h4>Keine Kaufdaten gefunden</h4>
+              <p class="muted">Diese Seite zeigt die Bestätigung direkt nach dem Kauf. Bitte gehe zurück und schließe den Kauf ab.</p>
+              <div style="margin-top: 14px; display:flex; gap:10px; flex-wrap:wrap;">
+                <a class="btn btn-primary" href="index.html#tickets">Zur Ticketseite</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Abi Party 2026 GO · Gambrinus am Fürstenbahnhof, Bad Homburg · 23.01.2026 · 21:00 Uhr</p>
+      <p class="signature">by Yannik</p>
+    </footer>
+  </div>
+
+  <script src="success.js"></script>
+</body>
+</html>

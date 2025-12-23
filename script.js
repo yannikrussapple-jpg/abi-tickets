@@ -142,17 +142,22 @@
           return;
         }
 
-        remaining -= order.quantity;
-        updateUI();
+        // Persist for success page, then redirect.
+        try {
+          sessionStorage.setItem('lastPurchase', JSON.stringify({
+            name: `${order.firstName} ${order.lastName}`,
+            email: order.email,
+            quantity: order.quantity,
+            total: order.total,
+            ticketCode: code,
+            paypalOrderId: (capture && capture.id) || (data && data.orderID) || null,
+            timestamp: new Date().toISOString()
+          }));
+        } catch {
+          // ignore storage failures
+        }
 
-        confirmation.hidden = false;
-        confirmationTitle.textContent = 'Zahlung bestätigt';
-        confirmationDetail.textContent = `${order.quantity} Ticket(s) für ${order.firstName} ${order.lastName} · ${PRICE_PER_TICKET} € pro Ticket · Zahlung PayPal.`;
-        ticketCodeEl.textContent = code;
-
-        clearPayPal();
-        pendingOrder = null;
-        form.reset();
+        window.location.href = 'success.html';
       },
       onError: (err) => {
         alert('PayPal Fehler: ' + err.message);
