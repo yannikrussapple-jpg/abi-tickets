@@ -40,50 +40,26 @@
   const submitToWebhook = async (payload) => {
     if (!N8N_WEBHOOK_URL) throw new Error('n8n Webhook URL nicht konfiguriert.');
 
-    const send = async (url, init) => {
-      const res = await fetch(url, { redirect: 'follow', ...init });
-      const text = await res.text().catch(() => '');
-      let json = {};
-      if (text) {
-        try {
-          json = JSON.parse(text);
-        } catch {
-          json = {};
-        }
-      }
-      return { res, text, json };
-    };
+    // This n8n endpoint is configured as GET-only. Using POST+JSON would trigger a CORS preflight (OPTIONS)
+    // which fails, so we send as GET with query parameters.
+    const url = new URL(N8N_WEBHOOK_URL);
+    Object.entries(payload || {}).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      url.searchParams.set(key, typeof value === 'string' ? value : JSON.stringify(value));
+    });
 
-    const postInit = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(payload)
-    };
-
-    let { res, text, json } = await send(N8N_WEBHOOK_URL, postInit);
-
-    // n8n kann Webhooks auf GET-only konfigurieren. Dann liefert POST typischerweise 404 mit einem Hinweistext.
-    const postNotRegistered =
-      res.status === 404 && (
-        (text || '').toLowerCase().includes('not registered for post') ||
-        (json && typeof json.message === 'string' && json.message.toLowerCase().includes('not registered for post'))
-      );
-
-    if (!res.ok && postNotRegistered) {
-      const url = new URL(N8N_WEBHOOK_URL);
-      Object.entries(payload || {}).forEach(([key, value]) => {
-        if (value === undefined || value === null) return;
-        url.searchParams.set(key, typeof value === 'string' ? value : JSON.stringify(value));
-      });
-      ({ res, text, json } = await send(url.toString(), { method: 'GET', headers: { 'Accept': 'application/json' } }));
-    }
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      redirect: 'follow'
+    });
 
     if (!res.ok) {
-      const details = (json && json.message) ? ` – ${json.message}` : (text ? ` – ${text}` : '');
-      throw new Error(`Webhook fehlgeschlagen: ${res.status} ${res.statusText}${details}`);
+      const text = await res.text().catch(() => '');
+      throw new Error(`Webhook fehlgeschlagen: ${res.status} ${res.statusText}${text ? ` – ${text}` : ''}`);
     }
 
-    return json;
+    return res.json().catch(() => ({}));
   };
 
   const clearPayPal = () => {
