@@ -1,9 +1,10 @@
 (() => {
   const TOTAL = 200;
   const PRICE_PER_TICKET = 12;
+  const BYPASS_PAYPAL = true;
   // Supabase configuration (fill with your project values)
-  const SUPABASE_URL = '';
-  const SUPABASE_ANON_KEY = '';
+  const SUPABASE_URL = 'https://wnhlsyumissqowvesrfp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InduaGxzeXVtaXNzcW93dmVzcmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0ODg3MDgsImV4cCI6MjA4MjA2NDcwOH0.rkh7AGvu7c4zOUKfi1xcmorrycfsEw34ZFHSI1-gTpg';
   const SUPABASE_TABLE = 'tickets';
   const supabase = (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY)
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -165,6 +166,39 @@
         total: PRICE_PER_TICKET * quantity,
         timestamp: new Date().toISOString()
       };
+
+      if (BYPASS_PAYPAL) {
+        const code = makeCode();
+        const dbRecord = {
+          first_name: pendingOrder.firstName,
+          last_name: pendingOrder.lastName,
+          birthdate: pendingOrder.birthdate,
+          email: pendingOrder.email,
+          quantity: pendingOrder.quantity,
+          price_per_ticket: pendingOrder.pricePerTicket,
+          total: pendingOrder.total,
+          payment_provider: 'dev-bypass',
+          paypal_order_id: null,
+          paypal_payer_id: null,
+          ticket_code: code,
+          created_at: new Date().toISOString()
+        };
+        try {
+          await submitToSupabase(dbRecord);
+        } catch (e) {
+          alert('Speichern in der Datenbank fehlgeschlagen: ' + (e.message || e));
+          return;
+        }
+        remaining -= pendingOrder.quantity;
+        updateUI();
+        confirmation.hidden = false;
+        confirmationTitle.textContent = 'Reservierung gespeichert';
+        confirmationDetail.textContent = `${pendingOrder.quantity} Ticket(s) für ${pendingOrder.firstName} ${pendingOrder.lastName} · 12 € pro Ticket · Zahlung übersprungen (Test).`;
+        ticketCodeEl.textContent = code;
+        pendingOrder = null;
+        form.reset();
+        return;
+      }
 
       renderPayPal(pendingOrder);
     });
