@@ -1,8 +1,13 @@
 (() => {
   const TOTAL = 200;
   const PRICE_PER_TICKET = 12;
-  // Replace with your Google Apps Script / webhook URL that writes to the Sheet
-  const SHEET_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxtnAp53ivRoQJw2d0zXI8QuewiXSsHr7E8ia_ZOsX5EJzzgtOszzv1di4r4io-P-Hp/exec';
+  // Supabase configuration (fill with your project values)
+  const SUPABASE_URL = '';
+  const SUPABASE_ANON_KEY = '';
+  const SUPABASE_TABLE = 'tickets';
+  const supabase = (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY)
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
   let remaining = TOTAL;
   let pendingOrder = null;
   let paypalButtons = null;
@@ -37,23 +42,14 @@
 
   if (heroBtn) heroBtn.addEventListener('click', scrollToTickets);
 
-  const submitToSheet = async (payload) => {
-    if (!SHEET_ENDPOINT || SHEET_ENDPOINT.includes('YOUR_ENDPOINT_ID')) {
-      throw new Error('Bitte zuerst SHEET_ENDPOINT konfigurieren.');
-    }
-
-    const res = await fetch(SHEET_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) throw new Error('Sheet nicht erreichbar.');
-    const data = await res.json().catch(() => ({}));
-    if (data && data.status && data.status !== 'ok') {
-      throw new Error(data.message || 'Fehler beim Speichern.');
-    }
-    return data;
+  const submitToSupabase = async (record) => {
+    if (!supabase) throw new Error('Supabase nicht konfiguriert. Bitte SUPABASE_URL und SUPABASE_ANON_KEY setzen.');
+    const { data, error } = await supabase
+      .from(SUPABASE_TABLE)
+      .insert([record])
+      .select();
+    if (error) throw error;
+    return data && data[0];
   };
 
   const clearPayPal = () => {
@@ -89,8 +85,28 @@
         });
       },
       onApprove: async (data, actions) => {
-        await actions.order.capture();
-        await submitToSheet(order);
+        const capture = await actions.order.capture();
+        const code = makeCode();
+        const dbRecord = {
+          first_name: order.firstName,
+          last_name: order.lastName,
+          birthdate: order.birthdate,
+          email: order.email,
+          quantity: order.quantity,
+          price_per_ticket: order.pricePerTicket,
+          total: order.total,
+          payment_provider: 'paypal',
+          paypal_order_id: (capture && capture.id) || (data && data.orderID) || null,
+          paypal_payer_id: (data && data.payerID) || null,
+          ticket_code: code,
+          created_at: new Date().toISOString()
+        };
+        try {
+          await submitToSupabase(dbRecord);
+        } catch (e) {
+          alert('Speichern in der Datenbank fehlgeschlagen: ' + (e.message || e));
+          return;
+        }
 
         remaining -= order.quantity;
         updateUI();
@@ -98,7 +114,7 @@
         confirmation.hidden = false;
         confirmationTitle.textContent = 'Zahlung bestätigt';
         confirmationDetail.textContent = `${order.quantity} Ticket(s) für ${order.firstName} ${order.lastName} · 12 € pro Ticket · Zahlung PayPal.`;
-        ticketCodeEl.textContent = makeCode();
+        ticketCodeEl.textContent = code;
 
         clearPayPal();
         pendingOrder = null;
