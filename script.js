@@ -39,13 +39,51 @@
 
   const submitToWebhook = async (payload) => {
     if (!N8N_WEBHOOK_URL) throw new Error('n8n Webhook URL nicht konfiguriert.');
-    const res = await fetch(N8N_WEBHOOK_URL, {
+
+    const send = async (url, init) => {
+      const res = await fetch(url, { redirect: 'follow', ...init });
+      const text = await res.text().catch(() => '');
+      let json = {};
+      if (text) {
+        try {
+          json = JSON.parse(text);
+        } catch {
+          json = {};
+        }
+      }
+      return { res, text, json };
+    };
+
+    const postInit = {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error(`Webhook fehlgeschlagen: ${res.status} ${res.statusText}`);
-    return res.json().catch(() => ({}));
+    };
+
+    let { res, text, json } = await send(N8N_WEBHOOK_URL, postInit);
+
+    // n8n kann Webhooks auf GET-only konfigurieren. Dann liefert POST typischerweise 404 mit einem Hinweistext.
+    const postNotRegistered =
+      res.status === 404 && (
+        (text || '').toLowerCase().includes('not registered for post') ||
+        (json && typeof json.message === 'string' && json.message.toLowerCase().includes('not registered for post'))
+      );
+
+    if (!res.ok && postNotRegistered) {
+      const url = new URL(N8N_WEBHOOK_URL);
+      Object.entries(payload || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+        url.searchParams.set(key, typeof value === 'string' ? value : JSON.stringify(value));
+      });
+      ({ res, text, json } = await send(url.toString(), { method: 'GET', headers: { 'Accept': 'application/json' } }));
+    }
+
+    if (!res.ok) {
+      const details = (json && json.message) ? ` – ${json.message}` : (text ? ` – ${text}` : '');
+      throw new Error(`Webhook fehlgeschlagen: ${res.status} ${res.statusText}${details}`);
+    }
+
+    return json;
   };
 
   const clearPayPal = () => {
@@ -162,35 +200,8 @@
         timestamp: new Date().toISOString()
       };
 
-      const payload = {
-        firstName: pendingOrder.firstName,
-        lastName: pendingOrder.lastName,
-        birthdate: pendingOrder.birthdate,
-        email: pendingOrder.email,
-        quantity: pendingOrder.quantity,
-        pricePerTicket: pendingOrder.pricePerTicket,
-        total: pendingOrder.total,
-        timestamp: pendingOrder.timestamp
-      };
-
-      try {
-        await submitToWebhook(payload);
-      } catch (e) {
-        alert('Fehler beim Senden an n8n: ' + (e.message || e));
-        return;
-      }
-
-      const code = makeCode();
-      remaining -= pendingOrder.quantity;
-      updateUI();
-
-      confirmation.hidden = false;
-      confirmationTitle.textContent = 'Zahlung bestätigt';
-      confirmationDetail.textContent = `${pendingOrder.quantity} Ticket(s) für ${pendingOrder.firstName} ${pendingOrder.lastName} · 12 € pro Ticket · Zahlung PayPal.`;
-      ticketCodeEl.textContent = code;
-
-      pendingOrder = null;
-      form.reset();
+      // Paywall: erst PayPal-Zahlung abschließen, dann an n8n senden.
+      renderPayPal(pendingOrder);
     });
   }
 
