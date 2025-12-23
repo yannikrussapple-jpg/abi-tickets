@@ -1,7 +1,6 @@
 (() => {
   const TOTAL = 200;
   const PRICE_PER_TICKET = 12;
-  const BYPASS_PAYPAL = true;
   // n8n webhook configuration
   const N8N_WEBHOOK_URL = 'https://n8n.srv1146092.hstgr.cloud/webhook-test/c23e2274-650c-43e9-bfd7-fa524b922d97';
   let remaining = TOTAL;
@@ -163,40 +162,35 @@
         timestamp: new Date().toISOString()
       };
 
-      if (BYPASS_PAYPAL) {
-        const code = makeCode();
-        const dbRecord = {
-          first_name: pendingOrder.firstName,
-          last_name: pendingOrder.lastName,
-          birthdate: pendingOrder.birthdate,
-          email: pendingOrder.email,
-          quantity: pendingOrder.quantity,
-          price_per_ticket: pendingOrder.pricePerTicket,
-          total: pendingOrder.total,
-          payment_provider: 'dev-bypass',
-          paypal_order_id: null,
-          paypal_payer_id: null,
-          ticket_code: code,
-          created_at: new Date().toISOString()
-        };
-        try {
-          await submitToWebhook(dbRecord);
-        } catch (e) {
-          alert('Speichern im n8n Webhook fehlgeschlagen: ' + (e.message || e));
-          return;
-        }
-        remaining -= pendingOrder.quantity;
-        updateUI();
-        confirmation.hidden = false;
-        confirmationTitle.textContent = 'Reservierung gespeichert';
-        confirmationDetail.textContent = `${pendingOrder.quantity} Ticket(s) für ${pendingOrder.firstName} ${pendingOrder.lastName} · 12 € pro Ticket · Zahlung übersprungen (Test).`;
-        ticketCodeEl.textContent = code;
-        pendingOrder = null;
-        form.reset();
+      const payload = {
+        firstName: pendingOrder.firstName,
+        lastName: pendingOrder.lastName,
+        birthdate: pendingOrder.birthdate,
+        email: pendingOrder.email,
+        quantity: pendingOrder.quantity,
+        pricePerTicket: pendingOrder.pricePerTicket,
+        total: pendingOrder.total,
+        timestamp: pendingOrder.timestamp
+      };
+
+      try {
+        await submitToWebhook(payload);
+      } catch (e) {
+        alert('Fehler beim Senden an n8n: ' + (e.message || e));
         return;
       }
 
-      renderPayPal(pendingOrder);
+      const code = makeCode();
+      remaining -= pendingOrder.quantity;
+      updateUI();
+
+      confirmation.hidden = false;
+      confirmationTitle.textContent = 'Zahlung bestätigt';
+      confirmationDetail.textContent = `${pendingOrder.quantity} Ticket(s) für ${pendingOrder.firstName} ${pendingOrder.lastName} · 12 € pro Ticket · Zahlung PayPal.`;
+      ticketCodeEl.textContent = code;
+
+      pendingOrder = null;
+      form.reset();
     });
   }
 
