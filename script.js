@@ -2,13 +2,8 @@
   const TOTAL = 200;
   const PRICE_PER_TICKET = 12;
   const BYPASS_PAYPAL = true;
-  // Supabase configuration (fill with your project values)
-  const SUPABASE_URL = 'https://wnhlsyumissqowvesrfp.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InduaGxzeXVtaXNzcW93dmVzcmZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0ODg3MDgsImV4cCI6MjA4MjA2NDcwOH0.rkh7AGvu7c4zOUKfi1xcmorrycfsEw34ZFHSI1-gTpg';
-  const SUPABASE_TABLE = 'tickets';
-  const supabase = (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY)
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    : null;
+  // n8n webhook configuration
+  const N8N_WEBHOOK_URL = 'https://n8n.srv1146092.hstgr.cloud/webhook-test/c23e2274-650c-43e9-bfd7-fa524b922d97';
   let remaining = TOTAL;
   let pendingOrder = null;
   let paypalButtons = null;
@@ -43,14 +38,15 @@
 
   if (heroBtn) heroBtn.addEventListener('click', scrollToTickets);
 
-  const submitToSupabase = async (record) => {
-    if (!supabase) throw new Error('Supabase nicht konfiguriert. Bitte SUPABASE_URL und SUPABASE_ANON_KEY setzen.');
-    const { data, error } = await supabase
-      .from(SUPABASE_TABLE)
-      .insert([record])
-      .select();
-    if (error) throw error;
-    return data && data[0];
+  const submitToWebhook = async (payload) => {
+    if (!N8N_WEBHOOK_URL) throw new Error('n8n Webhook URL nicht konfiguriert.');
+    const res = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`Webhook fehlgeschlagen: ${res.status} ${res.statusText}`);
+    return res.json().catch(() => ({}));
   };
 
   const clearPayPal = () => {
@@ -103,9 +99,9 @@
           created_at: new Date().toISOString()
         };
         try {
-          await submitToSupabase(dbRecord);
+          await submitToWebhook(dbRecord);
         } catch (e) {
-          alert('Speichern in der Datenbank fehlgeschlagen: ' + (e.message || e));
+          alert('Speichern im n8n Webhook fehlgeschlagen: ' + (e.message || e));
           return;
         }
 
@@ -184,9 +180,9 @@
           created_at: new Date().toISOString()
         };
         try {
-          await submitToSupabase(dbRecord);
+          await submitToWebhook(dbRecord);
         } catch (e) {
-          alert('Speichern in der Datenbank fehlgeschlagen: ' + (e.message || e));
+          alert('Speichern im n8n Webhook fehlgeschlagen: ' + (e.message || e));
           return;
         }
         remaining -= pendingOrder.quantity;
