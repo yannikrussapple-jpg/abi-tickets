@@ -133,10 +133,33 @@
           paypal_order_id: (capture && capture.id) || (data && data.orderID) || null,
           paypal_payer_id: (data && data.payerID) || null,
           ticket_code: code,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+
+          // n8n: trigger sending a confirmation email to the buyer
+          send_confirmation_email: true,
+          receipt: {
+            event_name: 'Abi Party',
+            event_date: '23.01.2026',
+            event_time: '21:00',
+            location: 'Gambrinus am Fürstenbahnhof, Bad Homburg',
+            price_per_ticket_eur: order.pricePerTicket,
+            total_eur: order.total,
+            buyer_name: `${order.firstName} ${order.lastName}`,
+            buyer_email: order.email,
+            quantity: order.quantity,
+            ticket_code: code
+          }
         };
         try {
-          await submitToWebhook(dbRecord);
+          const webhookResult = await submitToWebhook(dbRecord);
+
+          // Optional: show that email was sent if n8n returns it
+          if (webhookResult && (webhookResult.emailSent === true || webhookResult.email_sent === true)) {
+            confirmationDetail.dataset.emailSent = 'true';
+          }
+          if (webhookResult && typeof webhookResult.message === 'string') {
+            confirmationDetail.dataset.webhookMessage = webhookResult.message;
+          }
         } catch (e) {
           alert('Speichern im n8n Webhook fehlgeschlagen: ' + (e.message || e));
           return;
@@ -147,7 +170,13 @@
 
         confirmation.hidden = false;
         confirmationTitle.textContent = 'Zahlung bestätigt';
-        confirmationDetail.textContent = `${order.quantity} Ticket(s) für ${order.firstName} ${order.lastName} · ${PRICE_PER_TICKET} € pro Ticket · Zahlung PayPal.`;
+        {
+          const base = `${order.quantity} Ticket(s) für ${order.firstName} ${order.lastName} · ${PRICE_PER_TICKET} € pro Ticket · Zahlung PayPal.`;
+          const emailNote = confirmationDetail.dataset.emailSent === 'true'
+            ? ` Bestätigungs-E-Mail an ${order.email} gesendet.`
+            : '';
+          confirmationDetail.textContent = base + emailNote;
+        }
         ticketCodeEl.textContent = code;
 
         clearPayPal();
