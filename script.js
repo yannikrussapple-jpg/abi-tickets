@@ -1,6 +1,6 @@
 (() => {
   const TOTAL = 200;
-  const PRICE_PER_TICKET = 12;
+  const PRICE_PER_TICKET = 1;
   // n8n webhook configuration
   const N8N_WEBHOOK_URL = 'https://n8n.srv1146092.hstgr.cloud/webhook/Abi_2026';
   let remaining = TOTAL;
