@@ -3,27 +3,7 @@
   const PRICE_PER_TICKET = 1;
   // n8n webhook configuration
   const N8N_WEBHOOK_URL = 'https://n8n.srv1146092.hstgr.cloud/webhook/Abi_2026';
-  const REMAINING_KEY = 'abiTicketsRemaining';
-  const readRemaining = () => {
-    try {
-      const v = Number(localStorage.getItem(REMAINING_KEY));
-      if (Number.isFinite(v) && v >= 0 && v <= TOTAL) return Math.floor(v);
-    } catch {
-      // ignore
-    }
-    return TOTAL;
-  };
-  const writeRemaining = (value) => {
-    try {
-      localStorage.setItem(REMAINING_KEY, String(value));
-    } catch {
-      // ignore
-    }
-  };
-
-  let remaining = readRemaining();
-  // Ensure we have a stored value for subsequent loads.
-  writeRemaining(remaining);
+  let remaining = TOTAL;
   let pendingOrder = null;
   let paypalButtons = null;
 
@@ -137,10 +117,6 @@
           alert('Speichern im n8n Webhook fehlgeschlagen: ' + (e.message || e));
           return;
         }
-
-        // Update remaining tickets locally (client-side counter)
-        remaining = Math.max(0, remaining - order.quantity);
-        writeRemaining(remaining);
 
         // Persist for success page, then redirect.
         try {
